@@ -2,6 +2,10 @@
 
 New, changed or removed features, one line each, brief and direct. The section for a release becomes the release notes.
 
+## 1.0.2
+
+- New: Enhanced Textures, an optional download beside this release: the game's textures at twice the size, upscaled by an AI model. Import the zip into Obsidian like any other mod.
+
 ## 1.0.1
 
 - Changed: Render scale no longer draws glass, such as the ship's shield, over the objects behind it.
