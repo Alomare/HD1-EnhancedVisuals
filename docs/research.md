@@ -117,7 +117,10 @@ environments (17.9 to 21 m becomes 35 or 60 m), no engine call.
 **Render scale.** `albedo` at 1.5 or 2 times the back buffer takes every scene target along; the passes
 that draw into the back buffer get their own depth buffer at its size; the last picture goes through an
 area-filter downsample (`shaders/downsample.hlsl`, in the editor-only `copy:encode_as_rgbm`) before color
-grading. 33 pixel shaders divide by `back_buffer_size`, which stays the back buffer's in this layout
+grading. `transparent_in_world` (glass, such as the ship's shield) is hidden by the scene's depth, which the
+back buffer's own depth buffer doesn't hold, so with a render scale it draws into `ev_world`: the finished
+picture brought back up to the scene's size (nearest texel, the same shader), with the scene's depth
+buffer, then down again. 33 pixel shaders divide by `back_buffer_size`, which stays the back buffer's in this layout
 whichever way the engine fills it; `tools/bbsize.py` patches the 26 that bind a scene texture to divide by
 that texture's size instead (one `resinfo`, the operands repointed, the container re-signed with the DXBC
 checksum, which the tool reproduces for every game shader). Open: whether the engine sizes each layer's

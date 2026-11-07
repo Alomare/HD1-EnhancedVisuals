@@ -205,6 +205,21 @@ def render_scale(t, scale):
     wire = one((p for p in win["pass"] if p.get("name") == "wireframe"), "the win wireframe layer")
     assert wire["depth_stencil_target"] == "ev_output_depth" and win["pass"].index(wire) == 0
     wire["clear_flags"] = "DEPTH|STENCIL"
+    # transparent_in_world (glass such as the ship's shield) draws over the finished picture and is hidden
+    # by the scene's depth. ev_output_depth holds none of it, so the layer draws instead into ev_world, the
+    # picture brought back up to render scale, with the scene's own depth buffer, and the result comes back
+    # down to the screen (both ways through shaders/downsample.hlsl).
+    t["global_resources"].append({"depends_on": "albedo", "format": "R8G8B8A8", "h_scale": 1, "hint_needs_clearing": False,
+                                  "name": "ev_world", "type": "render_target", "w_scale": 1})
+    for name, inp, out in (("ev_world_up", "output_rt", "ev_world"), ("ev_world_down", "ev_world", "output_rt")):
+        t["resource_generators"][name] = {"modifiers": [fp("copy:ENCODE_AS_RGBM", inp, out)]}
+    tiw = one((i for i, p in enumerate(win["pass"]) if p.get("name") == "transparent_in_world"), "transparent_in_world layer")
+    win["pass"][tiw]["render_targets"] = "ev_world"
+    win["pass"][tiw]["depth_stencil_target"] = "output_dst"
+    win["pass"].insert(tiw + 1, {"depth_stencil_target": "ev_output_depth", "name": "ev_world_down", "profiling_scope": "transparent",
+                                 "render_targets": "output_rt", "resource_generator": "ev_world_down"})
+    win["pass"].insert(tiw, {"depth_stencil_target": "output_dst", "name": "ev_world_up", "profiling_scope": "transparent",
+                             "render_targets": "ev_world", "resource_generator": "ev_world_up"})
     graded = []
     for d in walk(t["resource_generators"]["post_processing"]):
         for key in ("pass_modifiers", "fail_modifiers", "modifiers"):

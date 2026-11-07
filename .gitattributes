@@ -2,6 +2,7 @@
 *.bin binary
 *.shader_library binary
 *.png binary
+*.jpg binary
 
 # Left out of the release zip.
 .gitattributes export-ignore

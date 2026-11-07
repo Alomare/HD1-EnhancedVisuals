@@ -146,6 +146,17 @@ def check_render_scale(dev, manifest, rng):
           f"1.5x = area average (diff {np.abs(got15 - want15).max():.1e})")
     failures += not good
 
+    # The way up for transparent_in_world: each pixel takes the texel under it, so at 2x up and back down
+    # gives the picture back.
+    small = rng.random((72, 128, 4)).astype(np.float32)
+    up = dev.run(down, (256, 144), textures=[small])
+    back = dev.run(down, (128, 72), textures=[up])
+    nearest = np.repeat(np.repeat(small, 2, axis=0), 2, axis=1)
+    good = np.abs(up - nearest).max() < 1e-4 and np.abs(back - small).max() < 1e-4
+    print(f"{'ok ' if good else 'BAD'} upscale: 2x = nearest texel (diff {np.abs(up - nearest).max():.1e}), "
+          f"up and down = the picture (diff {np.abs(back - small).max():.1e})")
+    failures += not good
+
     files = sorted({r["data"] for r in manifest["resources"] if r["data"].startswith("res/render_scale/")})
     stages = bad = 0
     for data_path in files:
@@ -193,9 +204,14 @@ def check_render_scale(dev, manifest, rng):
         stale = [d for d in walk_tree(t["layer_configs"]["default"]) if d.get("depth_stencil_target") == "output_dst"
                  and d.get("render_targets") == "output_rt"]
         graded = [d for d in walk_tree(t["resource_generators"]["post_processing"]) if d.get("material") == "color_grading"]
-        good = (any(d.get("w_scale") == scale for d in albedo) and not stale
+        layers = [d.get("name") for d in walk_tree(t["layer_configs"]["default"])]
+        tiw = [d for d in walk_tree(t["layer_configs"]["default"]) if d.get("name") == "transparent_in_world"
+               and d.get("render_targets") == "ev_world" and d.get("depth_stencil_target") == "output_dst"]
+        good = (any(d.get("w_scale") == scale for d in albedo) and not stale and len(tiw) == 1
+                and layers.index("ev_world_up") + 1 == layers.index("transparent_in_world", layers.index("ev_world_up"))
                 and all(d["input"] == "ev_scaled_down" for d in graded if d.get("output") == "output_rt"))
-        print(f"{'ok ' if good else 'BAD'} {r['data']}: albedo at {scale}, back-buffer layers on their own depth, grading after the downsample")
+        print(f"{'ok ' if good else 'BAD'} {r['data']}: albedo at {scale}, back-buffer layers on their own depth, "
+              "glass on the scene's depth, grading after the downsample")
         failures += not good
     return failures
 

@@ -2,6 +2,11 @@
 
 New, changed or removed features, one line each, brief and direct. The section for a release becomes the release notes.
 
+## 1.0.1
+
+- Changed: Render scale no longer draws glass, such as the ship's shield, over the objects behind it.
+- New: A thumbnail for Obsidian.
+
 ## 1.0.0
 
 - New: Ambient light, in the manner of ReShade's Ambient Light: deeper dark tones and a wide, soft glow around lit areas, Subtle or Strong.

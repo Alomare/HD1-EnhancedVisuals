@@ -6,6 +6,10 @@
 // source texels under its footprint, each weighted by how much of it the footprint covers: a box filter
 // of exactly the scale, which at 2x is the plain 2x2 average and at 1.5x doesn't skip or double texels.
 // The footprint comes from the derivatives of the texture coordinate, so the shader needs no constants.
+//
+// The same shader brings the screen's picture up to render scale for the transparent_in_world layer
+// (tools/build.py): there the footprint is under a texel, so each output pixel takes the one texel
+// under it, and at 2x the way up and back down gives the picture back unchanged.
 
 Texture2D __tex_input_texture0 : register(t0);
 SamplerState __samp_input_texture0 : register(s0);
@@ -21,7 +25,7 @@ float4 ps_main(PS_INPUT input) : SV_TARGET
 	uint w, h;
 	__tex_input_texture0.GetDimensions(w, h);
 	float2 size = float2(w, h);
-	float2 foot = max(float2(abs(ddx(input.uv.x)), abs(ddy(input.uv.y))) * size, 1.0);
+	float2 foot = max(float2(abs(ddx(input.uv.x)), abs(ddy(input.uv.y))) * size, 1e-3);
 	float2 lo = input.uv * size - foot * 0.5;
 	float2 hi = lo + foot;
 	int2 first = int2(floor(lo));
