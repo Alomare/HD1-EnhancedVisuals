@@ -175,7 +175,7 @@ all live through `api.world.shading` (Photo Mode's Look tab already uses them). 
   transparent and HUD passes draw to the back buffer with the scene's depth buffer, which would then be a
   different size. Driver supersampling (DSR, VSR) does it cleanly.
 - **Higher-resolution textures by hand.** New art for 2,045 textures is out of scope; an upscaler is the
-  practical route (see Textures below).
+  practical route, taken by the separate Enhanced Textures download.
 - **Engine features** (ray tracing, new light types, new G-buffer channels): need the exe.
 
 ## Tools in this repository
@@ -192,39 +192,7 @@ all live through `api.world.shading` (Photo Mode's Look tab already uses them). 
 | `tools/shaderlib.py` | Swaps a stage of a shader library entry |
 | `tools/warp.py`, `tools/preview.py` | Runs the mod's and the game's pixel shaders on WARP over a ray-cast scene |
 | `tools/build.py`, `tools/check.py` | Builds `res/` and the manifest's resources, then checks them offline |
-| `tools/texture_survey.py` | Every texture: size, format, copies, streamed part |
-| `tools/textures.py` | The upscaled texture pipeline and the Enhanced Textures mod it writes |
 | `internal/testing/` (not in git) | Photo Mode's scripted game harness, with probes that set renderer settings and shading values in a paused mission |
-
-## Textures
-
-`tools/texture_survey.py` (output in `internal/research/textures.csv`):
-
-- 13,072 texture entries, but only 2,045 distinct textures: the same file sits in several level bundles
-  (median 2 copies, up to 60). Distinct data is 0.25 GB, all entries 1.93 GB. Nothing is streamed: every
-  texture is whole inside the bundles, so a replacement is a plain resource.
-- Small for a modern screen, as a top-down game's are: most are 512 px or less on the longest side, 64
-  are 1024, three are 2048 or 4096.
-- Formats: DXT5 (906), DXT1 (669), ATI2/BC5 normal maps (249), uncompressed 32-bit (217), DXT3 (3).
-  The resource is a plain DDS with every mip, then the 4-byte category tail.
-
-So an AI-upscaled set is possible: decode each DDS, upscale colour and alpha apart, treat normal maps as
-vectors (upscale X and Y, rebuild and renormalize), wrap tiling textures so their edges still meet,
-rebuild the mips, compress back to the same BC format (DirectXTex `texconv`), and ship each copy under
-its bundle. The costs: every copy has to be replaced, or the old one shows wherever a copy was left out,
-so a full set at twice the size means about 7.7 GB of patches for Obsidian to write; and upscalers
-invent detail, which suits terrain and props better than text, decals and UI. A pilot on the most
-visible sets (a planet's terrain, Helldiver armour, one enemy family) shows whether the gain is worth
-the size. The upscaling wants a real GPU: this notebook's MX110 is slow for it.
-
-`tools/textures.py` does all of it, and writes the result as a separate mod, `Mods/EnhancedTextures`:
-select (DXT1/3/5, power-of-two, 1024 to 2048 px by default: 47 textures, 326 copies), extract, upscale
-(Real-ESRGAN, or Lanczos to test), pack and check. Packing needs no external tool: Pillow compresses each
-mip, and the header is the original texture's with only the size and mip count changed. texconv can be
-used instead for better compression. Proven in game on 2026-11-05 with a probe build that striped each
-replaced texture magenta: the desert ground drew the stripes from the double-size texture, with no crash.
-Pitfall found on the way: Pillow resizes RGBA with colour weighted by alpha, which darkens colour under
-low alpha, so every resize there works channel by channel.
 
 ## What the probes settled
 
