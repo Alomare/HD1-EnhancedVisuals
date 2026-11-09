@@ -27,7 +27,7 @@ A shadow resolution of 8192 takes 256 MB of video memory for the sun alone. With
 
 Obsidian API 1.29.0 or later, which Obsidian installs with the mod. Enhanced Visuals is a client mod: it works in any lobby, and only this player sees the changes.
 
-Photo Mode's sky fix is built in, so the two mods work together. Third Person Camera also uses F9 by default, so with both mods on, change one of the two keys in Obsidian.
+Photo Mode's sky fix is built in, so the two mods work together. Third Person Camera also uses F9 by default, so with both mods on, change one of the two keys in Obsidian. Both mods replace the render config: put Enhanced Visuals after Third Person Camera in the load order, or the shadow and render scale options do nothing.
 
 For the game's textures at twice the size, see [Upscaled Textures](https://github.com/Alomare/HD1-UpscaledTextures), a separate mod that works with or without this one.
 
