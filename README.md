@@ -23,22 +23,13 @@ Every option is in Obsidian. The ones that apply at once are also in game, under
 
 A shadow resolution of 8192 takes 256 MB of video memory for the sun alone. With Default, the Shadow quality in the game's Graphics menu applies as before.
 
-## Optional: Enhanced Textures
-
-The release page also has `alomare.enhancedtextures-<version>.zip`, a separate mod with the game's textures at twice the size, upscaled by an AI model and compressed back to the game's own formats. Import the zip into Obsidian like any other mod. It works with or without Enhanced Visuals.
-
-| Option | Default | What it covers |
-|---|---|---|
-| World textures | On | The colour textures of levels, characters and objects |
-| Normal maps | Off | The surface detail of the same. Sharper, but less clean than the originals |
-
-The upscaler adds detail that the original art didn't have, so some surfaces look sharper and a few look rough. Interface textures stay as they are.
-
 ## Requirements
 
 Obsidian API 1.29.0 or later, which Obsidian installs with the mod. Enhanced Visuals is a client mod: it works in any lobby, and only this player sees the changes.
 
 Photo Mode's sky fix is built in, so the two mods work together. Third Person Camera also uses F9 by default, so with both mods on, change one of the two keys in Obsidian.
+
+For the game's textures at twice the size, see [Upscaled Textures](https://github.com/Alomare/HD1-UpscaledTextures), a separate mod that works with or without this one.
 
 ## Building
 

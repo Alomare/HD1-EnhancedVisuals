@@ -175,7 +175,7 @@ all live through `api.world.shading` (Photo Mode's Look tab already uses them). 
   transparent and HUD passes draw to the back buffer with the scene's depth buffer, which would then be a
   different size. Driver supersampling (DSR, VSR) does it cleanly.
 - **Higher-resolution textures by hand.** New art for 2,045 textures is out of scope; an upscaler is the
-  practical route, taken by the separate Enhanced Textures download.
+  practical route, taken by the separate Upscaled Textures mod.
 - **Engine features** (ray tracing, new light types, new G-buffer channels): need the exe.
 
 ## Tools in this repository
