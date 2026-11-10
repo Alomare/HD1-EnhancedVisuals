@@ -1,5 +1,6 @@
 # A release: pushing a tag like v0.3.0 packs the mod into a zip and publishes it, and Obsidian offers
-# it as an update to anyone on an older version.
+# it as an update to anyone on an older version. Then the Nexus Mods workflow uploads the zip to the page
+# (nexus.yml).
 #
 # The rules for a release:
 # - The tag matches "version" in obsidian.json.
@@ -33,13 +34,7 @@ jobs:
           [ "$have" = "$v" ] || { echo "::error::obsidian.json says $have, the tag says $GITHUB_REF_NAME"; exit 1; }
           awk -v head="## $v" '$0 == head { on = 1; next } /^## / { on = 0 } on' CHANGELOG.md | sed '/./,$!d' > "$RUNNER_TEMP/notes.md"
           grep -q . "$RUNNER_TEMP/notes.md" || { echo "::error::CHANGELOG.md has no section headed ## $v"; exit 1; }
-          python3 -c "
-          import re, sys
-          bad = [l for l in open(sys.argv[1], encoding='utf-8').read().splitlines()
-                 if l.strip() and (not re.match(r'- (New|Changed|Removed): ', l) or re.search('[–—]', l))]
-          for l in bad: print('::error::changelog line breaks the rules:', l)
-          sys.exit(1 if bad else 0)
-          " "$RUNNER_TEMP/notes.md"
+          python3 tools/nexus_release.py check "$v"
 
       - name: Tests
         run: |
@@ -55,3 +50,13 @@ jobs:
           [[ "$GITHUB_REF_NAME" == *-* ]] && pre="--prerelease"
           gh release create "$GITHUB_REF_NAME" "$id-$version.zip" --title "$(jq -r .name.en obsidian.json) $version" \
             --notes-file "$RUNNER_TEMP/notes.md" $pre
+
+  # A release made with the workflow's own token starts no other workflow, so the upload is called from here.
+  nexus:
+    needs: release
+    if: ${{ !contains(github.ref_name, '-') }}
+    uses: ./.github/workflows/nexus.yml
+    with:
+      tag: ${{ github.ref_name }}
+    secrets:
+      NEXUS_API_KEY: ${{ secrets.NEXUS_API_KEY }}

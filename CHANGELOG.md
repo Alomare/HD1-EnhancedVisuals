@@ -2,6 +2,12 @@
 
 New, changed or removed features, one line each, brief and direct. The section for a release becomes the release notes.
 
+## 1.1.0
+
+- New: Desert ambient light, off by default: in daytime missions on desert planets, Ambient light stays off, as the bright sand made the picture too bright. Turning the option on keeps the effect there. It applies at once, also from the pause menu.
+- Changed: Shadow distance now covers every time of day and every area lighting of the planets. Before, only one lighting set per planet got the longer distance, so most missions kept the game distance whatever the option said.
+- Changed: Enhanced Visuals loads after Integrated Third Person, which replaces the render config too.
+
 ## 1.0.2
 
 - New: Enhanced Textures, an optional download beside this release: the game's textures at twice the size, upscaled by an AI model. Import the zip into Obsidian like any other mod.

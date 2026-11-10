@@ -6,20 +6,30 @@
 local plan = obsidian.module("src/plan")
 local api = obsidian.import("obsidian.api")
 
-local IDS = { "dust", "sharpen", "ambient", "ao", "ao_light", "shadows", "shadow_distance", "soft_shadows",
-	"render_scale", "detail" }
+local IDS = { "dust", "sharpen", "ambient", "desert_ambient", "ao", "ao_light", "shadows", "shadow_distance",
+	"soft_shadows", "render_scale", "detail" }
 local options = {}
 for _, id in ipairs(IDS) do options[id] = obsidian.settings.get(id) end
 
 local compare = false
 local sent = nil
+-- The mission's planet type and time of day, for Desert ambient light; nil off a mission.
+local place = nil
+
+local function read_place()
+	local mission = api and api.mission
+	if not (mission and mission.params) then return nil end
+	local ok, p = pcall(mission.params)
+	if not ok or type(p) ~= "table" then return nil end
+	return { environment = p.environment, time_of_day = p.time_of_day }
+end
 
 local function app()
 	return rawget(_G, "Application")
 end
 
 local function send(all)
-	local want = plan.of(options, compare)
+	local want = plan.of(options, compare, place)
 	local change = plan.changes(not all and sent or nil, want)
 	local a = app()
 	local said = {}
@@ -57,6 +67,9 @@ if api and api.mod_settings and api.mod_settings.BINDS then
 	page:toggle("dust", { option = true, default = false, label = "Screen dust",
 		info = "The layer of dust that drifts across the picture on most planets.",
 		on_change = function(v) set("dust", v) end })
+	page:toggle("desert_ambient", { option = true, default = false, label = "Desert ambient light",
+		info = "Ambient light in daytime missions on desert planets, where the bright sand makes the picture too bright.",
+		on_change = function(v) set("desert_ambient", v) end })
 	page:choice("ao", { option = true, default = "strong", label = "Ambient occlusion",
 		choices = choices({ { "off", "Off" }, { "subtle", "Subtle" }, { "strong", "Strong" } }),
 		info = "Darkens the light where surfaces meet, such as at the foot of walls and under rocks.",
@@ -79,12 +92,29 @@ end)
 
 send(true)
 
--- A new screen (the ship, a mission) sends everything again, in case the game set its own values.
+-- A new screen (the ship, a mission) sends everything again, in case the game set other values. The
+-- mission's planet type and time of day are read about once a second, as the mission is built after the
+-- screen changes.
 local screen = nil
+local tick = 0
+local function same_place(a, b)
+	if a == nil or b == nil then return a == b end
+	return a.environment == b.environment and a.time_of_day == b.time_of_day
+end
 obsidian.on_frame(function()
 	local ok, _, name = pcall(api.game.state)
+	tick = tick + 1
 	if ok and name ~= screen then
 		screen = name
+		place = read_place()
+		tick = 0
 		send(true)
+	elseif tick >= 60 then
+		tick = 0
+		local now = read_place()
+		if not same_place(now, place) then
+			place = now
+			send(false)
+		end
 	end
 end)

@@ -13,6 +13,7 @@ Every option is in Obsidian. The ones that apply at once are also in game, under
 | Screen dust | **Off**, On | At once |
 | Sharpening | Off, **Normal**, Strong | Next launch |
 | Ambient light | Off, **Subtle**, Strong | Next launch |
+| Desert ambient light | **Off**, On | At once |
 | Ambient occlusion | Off, Subtle, **Strong** | At once |
 | Ambient occlusion affects | **Ambient light**, All daylight | At once |
 | Shadow resolution | Default, **4096**, 8192 | Next launch |
@@ -21,13 +22,15 @@ Every option is in Obsidian. The ones that apply at once are also in game, under
 | Render scale | **Default**, 1.5x, 2x | Next launch |
 | Model detail distance | Default, **2x**, 4x | At once |
 
-A shadow resolution of 8192 takes 256 MB of video memory for the sun alone. With Default, the Shadow quality in the game's Graphics menu applies as before.
+Desert ambient light: in daytime missions on desert planets, Ambient light stays off unless this option is on, as the bright sand makes the picture too bright with it.
+
+A shadow resolution of 8192 takes 256 MB of video memory for the sun alone. With Default, the Shadow quality in the game's Graphics menu applies as before, up to 2048.
 
 ## Requirements
 
 Obsidian API 1.29.0 or later, which Obsidian installs with the mod. Enhanced Visuals is a client mod: it works in any lobby, and only this player sees the changes.
 
-Photo Mode's sky fix is built in, so the two mods work together. Third Person Camera also uses F9 by default, so with both mods on, change one of the two keys in Obsidian. Both mods replace the render config: put Enhanced Visuals after Third Person Camera in the load order, or the shadow and render scale options do nothing.
+Photo Mode's sky fix is built in, so the two mods work together, as do Integrated Third Person and this mod: Enhanced Visuals asks to load after both, which replace the render config too. Third Person Camera also uses F9 by default, so with both mods on, change one of the two keys in Obsidian. Both mods replace the render config: put Enhanced Visuals after Third Person Camera in the load order, or the shadow and render scale options do nothing.
 
 For the game's textures at twice the size, see [Upscaled Textures](https://github.com/Alomare/HD1-UpscaledTextures), a separate mod that works with or without this one.
 

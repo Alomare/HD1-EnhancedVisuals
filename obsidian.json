@@ -1,7 +1,7 @@
 {
   "obsidian": 1,
   "id": "alomare.enhancedvisuals",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "name": {"en": "Enhanced Visuals"},
   "description": {"en": "Enhances graphics and adds extra visual effects."},
   "authors": ["Alomare"],
@@ -11,7 +11,7 @@
   "modules": ["src/plan.lua"],
   "source": "https://github.com/Alomare/HD1-EnhancedVisuals",
   "requires": ["obsidian.api"],
-  "load_after": ["alomare.photomode"],
+  "load_after": ["alomare.photomode", "alomare.integratedthirdperson"],
   "loader_api": 1,
   "keybinds": [
     {"id": "compare", "default": "f9", "label": {"en": "Compare with the game's own look"}}
@@ -20,6 +20,7 @@
     {"id": "dust", "type": "toggle", "default": false, "label": {"en": "Screen dust"}, "description": {"en": "The layer of dust that drifts across the picture on most planets."}},
     {"id": "sharpen", "type": "choice", "default": "normal", "choices": [{"id": "off", "label": {"en": "Off"}}, {"id": "normal", "label": {"en": "Normal"}}, {"id": "strong", "label": {"en": "Strong"}}], "label": {"en": "Sharpening"}, "description": {"en": "Restores the fine detail that anti-aliasing softens, with less at strong edges so they don't ring. Takes effect at the next launch."}},
     {"id": "ambient", "type": "choice", "default": "subtle", "choices": [{"id": "off", "label": {"en": "Off"}}, {"id": "subtle", "label": {"en": "Subtle"}}, {"id": "strong", "label": {"en": "Strong"}}], "label": {"en": "Ambient light"}, "description": {"en": "Deepens the dark tones and spreads a soft glow around lit areas, in place of the game's bloom. The HUD keeps the game's colors. Takes effect at the next launch."}},
+    {"id": "desert_ambient", "type": "toggle", "default": false, "label": {"en": "Desert ambient light"}, "description": {"en": "Ambient light in daytime missions on desert planets. Off by default, as the bright sand makes the picture too bright with it. Applies at once."}},
     {"id": "ao", "type": "choice", "default": "strong", "choices": [{"id": "off", "label": {"en": "Off"}}, {"id": "subtle", "label": {"en": "Subtle"}}, {"id": "strong", "label": {"en": "Strong"}}], "label": {"en": "Ambient occlusion"}, "description": {"en": "Darkens the light where surfaces meet, such as at the foot of walls and under crates and rocks."}},
     {"id": "ao_light", "type": "choice", "default": "ambient", "choices": [{"id": "ambient", "label": {"en": "Ambient light"}}, {"id": "all", "label": {"en": "All daylight"}}], "label": {"en": "Ambient occlusion affects"}, "description": {"en": "Ambient light darkens only the light from the sky, so the effect shows mostly in shade. All daylight darkens sunlight too."}},
     {"id": "shadows", "type": "choice", "default": "4096", "choices": [{"id": "game", "label": {"en": "Default"}}, {"id": "4096", "label": {"en": "4096"}}, {"id": "8192", "label": {"en": "8192"}}], "label": {"en": "Shadow resolution"}, "description": {"en": "The size of the sun's shadow map; larger gives sharper shadows. 8192 uses 256 MB of video memory. Takes effect at the next launch."}},

@@ -297,12 +297,12 @@ def shader_entry(name, source, defines=""):
 
 def shadow_distances():
     """The planets' shading environments with the far end of the sun's shadow cascade pushed out. Each
-    holds shadow_slice_depth_ranges, one (start, end) pair in view depth (tools/shading_env.py): 17.9 to
-    21 m on the mission planets, so at full zoom-out the top of the screen has no sun shadow. The pair is
-    rewritten in place; nothing else in the resource moves. Ranges under 15 m and over the new end stay as
-    they are. Answers {level: [(bundle, name hash, bytes)]}, read from the game install."""
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
-    import shading_env  # noqa: E402
+    holds shadow_slice_depth_ranges, one (start, end) pair in view depth (tools/shading_env.py) in each
+    settings set: 17.9 to 21 m on the mission planets, so at full zoom-out the top of the screen has no
+    sun shadow. The pair of every set is rewritten in place; nothing else in the resource moves. Ranges
+    under 12 m (the ship, menus and props; the shortest mission sets end at 14 m) and over the new end
+    stay as they are. Before 1.1.0 only the first set was patched, which left most times of day with the
+    game's range. Answers {level: [(bundle, name hash, bytes)]}, read from the game install."""
     want = {}
     for p in sorted((ROOT / "internal" / "dump" / "shading_environment").glob("*.bin")):
         bundle, name = p.stem.split("_")
@@ -317,19 +317,41 @@ def shadow_distances():
             data = datas[0]
             _, _, count = struct.unpack_from("<IQI", data, 0)
             recs = [struct.unpack_from("<IIII", data, 16 + 16 * i) for i in range(count)]
-            base = 16 + 16 * count + 12
             hit = [r for r in recs if r[2] == var]
             if len(hit) != 1 or hit[0][1] != 1:
                 continue
-            at = base + hit[0][3]
-            start, end = struct.unpack_from("<2f", data, at)
+            pairs = [(at, struct.unpack_from("<2f", data, at)) for at in slice_offsets(data, count, hit[0][3])]
             for level, far in SHADOW_DISTANCE.items():
-                if 15.0 <= end < far:
-                    patched = bytearray(data)
-                    struct.pack_into("<2f", patched, at, start, far)
-                    assert shading_env.parse(bytes(patched))[2] != shading_env.parse(data)[2]
+                patched = bytearray(data)
+                for at, (start, end) in pairs:
+                    if 12.0 <= end < far:
+                        struct.pack_into("<2f", patched, at, start, far)
+                if patched != data:
                     out[level].append((bundle, n, bytes(patched)))
     return out
+
+
+def slice_offsets(data, count, offset):
+    """Where the shadow slice pair sits in each settings set of a shading environment. After the
+    variable records come a u32 count of sets, then for each set: u32 name (murmur32 of "day", "dawn",
+    "dusk", "night", "default", "swamp" and so on), u32 size, the values, then u32 n and n float weights.
+    A mission picks one set by the time of day (GeneratedLevel: set_shading_environment_settings) and
+    environment areas blend others in, so every set needs the longer range. An index section follows
+    the sets and holds no values."""
+    pos = 16 + 16 * count
+    (sets,) = struct.unpack_from("<I", data, pos)
+    pos += 4
+    found = []
+    for _ in range(sets):
+        _, size = struct.unpack_from("<II", data, pos)
+        values = pos + 8
+        pos = values + size
+        (n,) = struct.unpack_from("<I", data, pos)
+        if n != count or offset + 8 > size or pos + 4 + 4 * n > len(data):
+            raise SystemExit(f"a shading environment with an unknown layout (set of {size} bytes, {n} weights)")
+        found.append(values + offset)
+        pos += 4 + 4 * n
+    return found
 
 
 def bundles_with(name):

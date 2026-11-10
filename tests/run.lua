@@ -41,6 +41,9 @@ local function boot(opts)
 		game = {
 			state = function() return {}, state end,
 		},
+		mission = {
+			params = function() return world.mission end,
+		},
 		mod_settings = { BINDS = true, page = function() return page end },
 	}
 	obsidian.import = function(id) assert(id == "obsidian.api"); return api end
@@ -132,7 +135,41 @@ end)
 
 -- Options built into the deployed files have no row in game; the rest have one, with the manifest's
 -- choices and default.
-local LIVE = { dust = true, ao = true, ao_light = true, detail = true }
+local LIVE = { dust = true, desert_ambient = true, ao = true, ao_light = true, detail = true }
+
+test("ambient light goes off in daytime desert missions unless Desert ambient light is on", function()
+	local w = boot({})
+	eq(w.renderer.ev_ambient, "true", "on the ship")
+	w.mission = { environment = "desert", time_of_day = "day" }
+	w.frame("game")
+	eq(w.renderer.ev_ambient, "false", "desert, day")
+	w.rows.desert_ambient.on_change(true)
+	eq(w.renderer.ev_ambient, "true", "option on")
+	w.rows.desert_ambient.on_change(false)
+	eq(w.renderer.ev_ambient, "false", "option off again")
+	w.mission = nil
+	w.frame("menu")
+	eq(w.renderer.ev_ambient, "true", "back on the ship")
+	for _, other in ipairs({ { "desert", "dusk" }, { "forest", "day" }, { "desert", "night" } }) do
+		local o = boot({})
+		o.mission = { environment = other[1], time_of_day = other[2] }
+		o.frame("game")
+		eq(o.renderer.ev_ambient, "true", other[1] .. " " .. other[2])
+	end
+end)
+
+test("a mission read after the screen changes still turns desert ambient light off", function()
+	local w = boot({})
+	w.frame("game")
+	eq(w.renderer.ev_ambient, "true", "mission not built yet")
+	w.mission = { environment = "desert", time_of_day = "day" }
+	w.frames(60)
+	eq(w.renderer.ev_ambient, "false", "read a second later")
+	local off = boot({ ambient = "off" })
+	off.mission = { environment = "desert", time_of_day = "day" }
+	off.frame("game")
+	eq(off.renderer.ev_ambient, "false", "ambient off stays off")
+end)
 
 test("live options have rows matching the manifest, the others none", function()
 	local f = assert(io.open("obsidian.json", "r"))
@@ -161,7 +198,7 @@ test("live options have rows matching the manifest, the others none", function()
 			end
 		end
 	end
-	eq(seen, 4, "live rows")
+	eq(seen, 5, "live rows")
 end)
 
 test("the plan's defaults match the manifest's", function()

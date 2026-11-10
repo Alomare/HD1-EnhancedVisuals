@@ -9,8 +9,14 @@ M.AO_STRENGTH = { subtle = 1.0, strong = 3.0 }
 
 M.DETAIL = { game = 1, x2 = 2, x4 = 4 }
 
-M.DEFAULTS = { dust = false, sharpen = "normal", ambient = "subtle", ao = "strong", ao_light = "ambient",
-	soft_shadows = "softer", detail = "x2" }
+M.DEFAULTS = { dust = false, sharpen = "normal", ambient = "subtle", desert_ambient = false, ao = "strong",
+	ao_light = "ambient", soft_shadows = "softer", detail = "x2" }
+
+-- Daytime missions on desert planets, where the bright sand under the ambient light's glow washes the
+-- picture out. place: { environment, time_of_day } as api.mission.params names them, or nil off a mission.
+function M.bright_desert(place)
+	return type(place) == "table" and place.environment == "desert" and place.time_of_day == "day"
+end
 
 local function pick(t, k)
 	local v = t[k]
@@ -19,13 +25,15 @@ local function pick(t, k)
 end
 
 -- options: what obsidian.settings.get answers, by id. compare: true while the game's own look is shown.
+-- place: the mission's { environment, time_of_day }, or nil.
 -- Answers { renderer = { name = string }, shading = { name = number or false } }; false gives the
 -- value back to the planet.
-function M.of(options, compare)
+function M.of(options, compare, place)
 	local ao_level = M.AO_STRENGTH[pick(options, "ao")]
 	local ao = ao_level ~= nil and not compare
 	local sharpen = pick(options, "sharpen") ~= "off" and not compare
 	local ambient = pick(options, "ambient") ~= "off" and not compare
+		and not (M.bright_desert(place) and not pick(options, "desert_ambient"))
 	local no_dust = not pick(options, "dust") and not compare
 	local detail = compare and 1 or (M.DETAIL[pick(options, "detail")] or 1)
 	local out = {
