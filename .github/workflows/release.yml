@@ -1,15 +1,9 @@
-# A release: pushing a tag like v0.3.0 packs the mod into a zip and publishes it, and Obsidian offers
-# it as an update to anyone on an older version. Then the Nexus Mods workflow uploads the zip to the page
-# (nexus.yml).
-#
-# The rules for a release:
-# - The tag matches "version" in obsidian.json.
-# - CHANGELOG.md has a section headed "## <version>": a list with one change per line, each starting
-#   "New:", "Changed:" or "Removed:", and nothing else. It becomes the release text on GitHub.
-# - The changelog follows the rules for public text: plain wording, and no em or en dashes.
-#
-# A tag with a suffix (v0.3.0-beta.1) makes a prerelease, which Obsidian doesn't offer, so use one to
-# try a build by hand. What goes in the zip is set by export-ignore in .gitattributes.
+# A release: pushing a tag like v1.2.0 packs the mod into a zip and publishes it, and Obsidian offers it as an
+# update to anyone on an older version. The steps are the shared ones for Obsidian mods
+# (Alomare/HD1-LuaModdingSkill, .github/workflows/mod-release.yml): the tag has to match "version" in
+# obsidian.json, the release notes are the version's section of CHANGELOG.md and follow the rules for
+# public text, the tests pass, and export-ignore in .gitattributes sets what goes in the zip. A tag with a
+# suffix (v1.2.0-beta.1) makes a prerelease, which Obsidian doesn't offer and Nexus never gets.
 name: Release
 
 on:
@@ -21,35 +15,9 @@ permissions:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: The tag matches obsidian.json, and the changelog has a section for it
-        run: |
-          v="${GITHUB_REF_NAME#v}"
-          have=$(jq -r .version obsidian.json)
-          [ "$have" = "$v" ] || { echo "::error::obsidian.json says $have, the tag says $GITHUB_REF_NAME"; exit 1; }
-          awk -v head="## $v" '$0 == head { on = 1; next } /^## / { on = 0 } on' CHANGELOG.md | sed '/./,$!d' > "$RUNNER_TEMP/notes.md"
-          grep -q . "$RUNNER_TEMP/notes.md" || { echo "::error::CHANGELOG.md has no section headed ## $v"; exit 1; }
-          python3 tools/nexus_release.py check "$v"
-
-      - name: Tests
-        run: |
-          sudo apt-get install -y -qq luajit >/dev/null
-          luajit tests/run.lua
-
-      - name: Pack and publish
-        run: |
-          id=$(jq -r .id obsidian.json)
-          version="${GITHUB_REF_NAME#v}"
-          git archive --format=zip --prefix="$id/" -o "$id-$version.zip" "$GITHUB_SHA"
-          pre=""
-          [[ "$GITHUB_REF_NAME" == *-* ]] && pre="--prerelease"
-          gh release create "$GITHUB_REF_NAME" "$id-$version.zip" --title "$(jq -r .name.en obsidian.json) $version" \
-            --notes-file "$RUNNER_TEMP/notes.md" $pre
+    uses: Alomare/HD1-LuaModdingSkill/.github/workflows/mod-release.yml@main
+    with:
+      check: python3 tools/nexus_release.py check "${GITHUB_REF_NAME#v}"
 
   # A release made with the workflow's own token starts no other workflow, so the upload is called from here.
   nexus:

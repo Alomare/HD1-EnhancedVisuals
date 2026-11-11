@@ -1,0 +1,15 @@
+# The offline tests on every push, by the workflow shared by the Obsidian mods
+# (Alomare/HD1-LuaModdingSkill, .github/workflows/mod-tests.yml).
+name: Tests
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    uses: Alomare/HD1-LuaModdingSkill/.github/workflows/mod-tests.yml@main
