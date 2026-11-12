@@ -2,7 +2,6 @@
 
     python tools/nexus_release.py section 1.1.0      # the CHANGELOG.md section of a version, as on GitHub
     python tools/nexus_release.py check 1.1.0        # the release rules for that section
-    python tools/nexus_release.py changelog 1.1.0    # the section as Nexus shows it: one change per line
     python tools/nexus_release.py files              # the title and description of the file on Nexus
 
 check: a section is a list, one change per line starting "- New:", "- Changed:" or "- Removed:", with nothing
@@ -58,16 +57,6 @@ def check(entries):
     return problems
 
 
-def changelog(entries):
-    out = []
-    for s in entries:
-        s = re.sub(r"^[-*]\s+", "", s)
-        s = re.sub(r"\*\*(.+?)\*\*", r"\1", s)
-        s = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", s)
-        out.append(s.replace("`", ""))
-    return "\n".join(out)
-
-
 def files():
     q = {"query": f"{{ modFiles(modId: {MOD_ID}, gameId: {GAME_ID}) {{ name description category }} }}"}
     req = urllib.request.Request(
@@ -95,8 +84,6 @@ def main():
         for p in problems:
             print(f"::error file=CHANGELOG.md::{p}")
         sys.exit(1 if problems else 0)
-    elif len(sys.argv) == 3 and sys.argv[1] == "changelog":
-        print(changelog(section(sys.argv[2])))
     elif len(sys.argv) == 2 and sys.argv[1] == "files":
         print(files())
     else:

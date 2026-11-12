@@ -1,7 +1,7 @@
 # Uploads a release's zip to Nexus Mods as a new version of the Enhanced Visuals file on the Helldivers Remastered
-# page (nexusmods.com/helldivers/mods/48). The version's CHANGELOG.md section becomes the version's changelog, one
-# change per line. The file's title and description are the ones on the page, set by
-# hand there, and stay as they are (tools/nexus_release.py). The page's other file, Upscaled Textures, is left alone.
+# page (nexusmods.com/helldivers/mods/48). No changelog goes to Nexus: the release notes are on GitHub. The file's
+# title and description are the ones on the page, set by hand there, and stay as they are (tools/nexus_release.py).
+# The page's other file, Upscaled Textures, is left alone.
 # The Release workflow runs it after publishing a release without a suffix, and it can run by hand from the Actions
 # tab for a tag that's already out. Pre-releases are never uploaded.
 #
@@ -71,13 +71,6 @@ jobs:
           test -s "$ZIP" || { echo "::error::$ZIP is missing from the release $TAG."; exit 1; }
           { echo "VERSION=$VERSION"; echo "ZIP=$ZIP"; } >> "$GITHUB_ENV"
 
-      - name: Changelog
-        id: notes
-        run: |
-          python3 tools/nexus_release.py changelog "$VERSION" > notes.txt
-          test -s notes.txt || { echo "::error::CHANGELOG.md has no section for $VERSION."; exit 1; }
-          { echo 'text<<NOTES_END'; cat notes.txt; echo 'NOTES_END'; } >> "$GITHUB_OUTPUT"
-
       - name: The file's title and description on the page now
         id: page
         run: python3 tools/nexus_release.py files >> "$GITHUB_OUTPUT"
@@ -102,4 +95,3 @@ jobs:
           allow_mod_manager_download: false
           update_mod_version: false
           mod_id: ${{ env.NEXUS_MOD_ID }}
-          changelog: ${{ steps.notes.outputs.text }}
