@@ -1,5 +1,5 @@
 # Uploads a release's zip to Nexus Mods as a new version of the Enhanced Visuals file on the Helldivers Remastered
-# page (nexusmods.com/helldivers/mods/48). No changelog goes to Nexus: the release notes are on GitHub. The file's
+# page (nexusmods.com/helldivers/mods/48). The version's changelog goes there too, one entry per change. The file's
 # title and description are the ones on the page, set by hand there, and stay as they are (tools/nexus_release.py).
 # The page's other file, Upscaled Textures, is left alone.
 # The Release workflow runs it after publishing a release without a suffix, and it can run by hand from the Actions
@@ -95,3 +95,9 @@ jobs:
           allow_mod_manager_download: false
           update_mod_version: false
           mod_id: ${{ env.NEXUS_MOD_ID }}
+
+      # After the upload, so the version is on the page. One entry per change line; lines already there are skipped.
+      - name: Changelog on Nexus
+        env:
+          NEXUS_API_KEY: ${{ secrets.NEXUS_API_KEY }}
+        run: python3 tools/nexus_release.py changelog "$VERSION"

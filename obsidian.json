@@ -5,7 +5,7 @@
   "name": {"en": "Enhanced Visuals"},
   "description": {"en": "Enhances graphics and adds extra visual effects."},
   "authors": ["Alomare"],
-  "image": "image.jpg",
+  "image": "icon.jpg",
   "scope": "client",
   "entry": "main.lua",
   "modules": ["src/plan.lua"],

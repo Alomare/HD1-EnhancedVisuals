@@ -1,91 +1,102 @@
-"""Text for the release workflows (.github/workflows/release.yml and nexus.yml).
+"""The Nexus Mods half of a release (.github/workflows/nexus.yml). The same file in every mod with a Nexus page;
+only the three constants below differ.
 
-    python tools/nexus_release.py section 1.1.0      # the CHANGELOG.md section of a version, as on GitHub
-    python tools/nexus_release.py check 1.1.0        # the release rules for that section
     python tools/nexus_release.py files              # the title and description of the file on Nexus
-
-check: a section is a list, one change per line starting "- New:", "- Changed:" or "- Removed:", with nothing
-else in it, and follows the rules for public text: no em or en dashes, and none of the words in WORDS.
+    python tools/nexus_release.py lines 1.2.0        # the changelog entries of a version, as Nexus gets them
+    python tools/nexus_release.py changelog 1.2.0    # adds them to the Nexus page (needs NEXUS_API_KEY)
 
 files: the upload action always sends a title (the file name, when none is given), so the workflow passes back
 what the page has now and the title and description set by hand on Nexus stay. Read from the public v2 API, no
-key needed. The Nexus page (Helldivers Remastered) holds two live files, Enhanced Visuals and Upscaled Textures,
-so the file is the live (MAIN) one whose name starts with FILE_NAME; anything else stops the run before an upload.
-Prints lines for $GITHUB_OUTPUT.
+key needed. The file is the live (MAIN) one whose name starts with FILE_NAME; anything else than exactly one
+stops the run before an upload. Prints lines for $GITHUB_OUTPUT.
+
+changelog: the "## <version>" section of CHANGELOG.md, one Nexus changelog entry per change line, so the page
+lists the changes one per line. The list marks, bold, code marks and link targets are dropped. Nexus only appends
+entries, so lines the page already has for that version are skipped, and a second run adds nothing.
+(The wording rules are checked before this, by the shared release workflow.)
 """
 
 import json
+import os
 import re
 import sys
 import urllib.request
 from pathlib import Path
 
-GAME_ID = 3552   # helldivers
-MOD_ID = 48      # nexusmods.com/helldivers/mods/48, Unique Mod ID 15255723835440 (3552 << 32 | 48)
-FILE_NAME = "Enhanced Visuals"
+MOD_ID = 48               # nexusmods.com/helldivers/mods/<MOD_ID>
+FILE_NAME = "Enhanced Visuals"          # the start of the file's name on the page, when the page holds other live files
+ENTRY_PREFIX = "Enhanced Visuals: "       # put before each changelog entry, when the page carries more than this mod
+
+GAME_ID = 3552            # helldivers
+GAME = "helldivers"
+UNIQUE_ID = GAME_ID << 32 | MOD_ID   # the Unique Mod ID on the Files tab, Advanced
 CHANGELOG = Path(__file__).resolve().parent.parent / "CHANGELOG.md"
-WORDS = re.compile(r"\b(its|it'?s|i|me|my|we|our|us|you|your)\b", re.I)  # the possessive, first and second person
-KINDS = re.compile(r"^- (New|Changed|Removed): \S")
+AGENT = "Obsidian-mod-release"
 
 
-def section(version):
-    """The lines of the CHANGELOG.md section headed "## <version>", blank lines dropped."""
-    out, on = [], False
-    for line in CHANGELOG.read_text(encoding="utf-8").replace("\r", "").split("\n"):
-        if line.startswith("## "):
-            on = line.strip() == f"## {version}"
-            continue
-        if on and line.strip():
-            out.append(line.strip())
-    return out
-
-
-def check(entries):
-    problems = []
-    if not entries:
-        problems.append("the section is empty or missing")
-    for s in entries:
-        if not KINDS.match(s):
-            problems.append(f"not a list entry starting \"- New:\", \"- Changed:\" or \"- Removed:\": {s}")
-            continue
-        body = re.sub(r"`[^`]*`", "", s[2:])  # code, such as an option id, isn't prose
-        hit = WORDS.search(body)
-        if hit:
-            problems.append(f"\"{hit.group(0)}\" in: {s}")
-        if "—" in s or "–" in s:
-            problems.append(f"a dash in: {s}")
-    return problems
+def request(url, data=None, key=None):
+    headers = {"Content-Type": "application/json", "User-Agent": AGENT}
+    if key:
+        headers["apikey"] = key
+    req = urllib.request.Request(url, data=json.dumps(data).encode() if data is not None else None, headers=headers)
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.load(r)
 
 
 def files():
     q = {"query": f"{{ modFiles(modId: {MOD_ID}, gameId: {GAME_ID}) {{ name description category }} }}"}
-    req = urllib.request.Request(
-        "https://api.nexusmods.com/v2/graphql", data=json.dumps(q).encode(),
-        headers={"Content-Type": "application/json", "User-Agent": "EnhancedVisuals-release"},
-    )
-    with urllib.request.urlopen(req, timeout=30) as r:
-        data = json.load(r)
+    data = request("https://api.nexusmods.com/v2/graphql", q)
     if data.get("errors"):
         sys.exit(f"Nexus refused the file list: {data['errors']}")
     live = [f for f in data["data"]["modFiles"] if f["category"] == "MAIN" and f["name"].startswith(FILE_NAME)]
     if len(live) != 1:
-        sys.exit(f"Expected one live Nexus file named {FILE_NAME}, found {len(live)}: {[f['name'] for f in live]}. "
-                 "Nothing uploaded.")
+        sys.exit(f"Expected one live Nexus file{' named ' + FILE_NAME if FILE_NAME else ''}, found {len(live)}: "
+                 f"{[f['name'] for f in live]}. Nothing uploaded.")
     f = live[0]
     desc = (f["description"] or "").replace("\r", "")
     return f"name={f['name']}\ndescription<<DESC_END\n{desc}\nDESC_END"
 
 
+def lines(version):
+    """The change lines of the CHANGELOG.md section headed "## <version>", as plain text."""
+    out, on = [], False
+    for line in CHANGELOG.read_text(encoding="utf-8").replace("\r", "").split("\n"):
+        if line.startswith("## "):
+            on = line.strip() == f"## {version}"
+            continue
+        s = line.strip()
+        if on and s:
+            s = re.sub(r"^[-*]\s+", "", s)
+            s = re.sub(r"\*\*(.+?)\*\*", r"\1", s)
+            s = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", s)
+            out.append(ENTRY_PREFIX + s.replace("`", ""))
+    return out
+
+
+def changelog(version):
+    key = os.environ.get("NEXUS_API_KEY")
+    if not key:
+        sys.exit("NEXUS_API_KEY is not set.")
+    entries = lines(version)
+    if not entries:
+        sys.exit(f"CHANGELOG.md has no section for {version}.")
+    have = request(f"https://api.nexusmods.com/v1/games/{GAME}/mods/{MOD_ID}/changelogs.json", key=key)
+    have = set(have.get(version, [])) if isinstance(have, dict) else set()
+    for s in entries:
+        if s in have:
+            print(f"already on Nexus: {s}")
+            continue
+        request(f"https://api.nexusmods.com/v3/mods/{UNIQUE_ID}/changelogs", {"version": version, "changelog": s}, key)
+        print(f"added: {s}")
+
+
 def main():
-    if len(sys.argv) == 3 and sys.argv[1] == "section":
-        print("\n".join(section(sys.argv[2])))
-    elif len(sys.argv) == 3 and sys.argv[1] == "check":
-        problems = check(section(sys.argv[2]))
-        for p in problems:
-            print(f"::error file=CHANGELOG.md::{p}")
-        sys.exit(1 if problems else 0)
-    elif len(sys.argv) == 2 and sys.argv[1] == "files":
+    if len(sys.argv) == 2 and sys.argv[1] == "files":
         print(files())
+    elif len(sys.argv) == 3 and sys.argv[1] == "lines":
+        print("\n".join(lines(sys.argv[2])))
+    elif len(sys.argv) == 3 and sys.argv[1] == "changelog":
+        changelog(sys.argv[2])
     else:
         sys.exit(__doc__)
 

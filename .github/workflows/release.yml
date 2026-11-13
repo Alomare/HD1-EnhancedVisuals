@@ -16,8 +16,6 @@ permissions:
 jobs:
   release:
     uses: Alomare/HD1-LuaModdingSkill/.github/workflows/mod-release.yml@main
-    with:
-      check: python3 tools/nexus_release.py check "${GITHUB_REF_NAME#v}"
 
   # A release made with the workflow's own token starts no other workflow, so the upload is called from here.
   nexus:
