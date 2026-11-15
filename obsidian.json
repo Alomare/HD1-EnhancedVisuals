@@ -1,7 +1,7 @@
 {
   "obsidian": 1,
   "id": "alomare.enhancedvisuals",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "name": {"en": "Enhanced Visuals"},
   "description": {"en": "Enhances graphics and adds extra visual effects."},
   "authors": ["Alomare"],
@@ -11,7 +11,7 @@
   "modules": ["src/plan.lua"],
   "source": "https://github.com/Alomare/HD1-EnhancedVisuals",
   "requires": ["obsidian.api"],
-  "load_after": ["alomare.photomode", "alomare.unleashedcamera", "alomare.integratedthirdperson"],
+  "load_after": ["alomare.photomode", "alomare.eyesofliberty"],
   "loader_api": 1,
   "keybinds": [
     {"id": "compare", "default": "f9", "label": {"en": "Compare with the game's own look"}}
