@@ -2,6 +2,10 @@
 
 New, changed, fixed or removed features, one line each, brief and direct. The section for a release becomes the release notes.
 
+## 1.1.1
+
+- Changed: Enhanced Visuals loads after Unleashed Camera, which replaces the render config too.
+
 ## 1.1.0
 
 - New: Desert ambient light, off by default: in daytime missions on desert planets, Ambient light stays off, as the bright sand made the picture too bright. Turning the option on keeps the effect there. It applies at once, also from the pause menu.
