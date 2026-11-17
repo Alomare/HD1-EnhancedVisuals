@@ -2,6 +2,10 @@
 
 New, changed, fixed or removed features, one line each, brief and direct. The section for a release becomes the release notes.
 
+## 1.1.3
+
+- Changed: a shorter description in Obsidian and the store.
+
 ## 1.1.2
 
 - Changed: Enhanced Visuals loads after Eyes of Liberty, the new name of Unleashed Camera, which replaces the render config too.
