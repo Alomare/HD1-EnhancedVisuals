@@ -18,7 +18,7 @@ import stingray as st  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DUMP = ROOT / "internal" / "dump"
-LIFTED = ROOT.parent.parent / "ProjectObsidian" / "ObsidianModManager" / "internal" / "research" / "lifted"
+LIFTED = ROOT.parents[2] / "ProjectObsidian" / "ObsidianLauncher" / "internal" / "research" / "lifted"
 EXE = st.CONTENTS.parent / "binaries" / "x64" / "helldivers.exe"
 GROUPS = {"water", "particle_billboard", "decals", "color_grading", "terrain", "health_3d", "default_shaders",
           "deferred_shading", "post_processing", "base", "additive", "war_front", "fxaa"}
